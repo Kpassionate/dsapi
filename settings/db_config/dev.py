@@ -9,9 +9,9 @@ MYSQL_DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'HOST': '127.0.0.1',
         'PORT': 3306,
-        'USER': 'auto',
+        'USER': 'root',
         'PASSWORD': 'g1234567',
-        'NAME': 'risk_control_id_test'
+        'NAME': 'auto'
     }
 }
 
