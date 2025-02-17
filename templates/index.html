@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 请求展示</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            text-align: center; /* 使按钮居中 */
+        }
+
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            resize: vertical; /* 允许垂直拉伸 */
+            min-height: 140px; /* 设置最小高度 */
+            color: #333; /* 默认文本颜色 */
+        }
+
+        textarea::placeholder {
+            color: #aaa; /* 占位符文本颜色 */
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .response-section {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .data-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            background-color: #fff;
+            border-radius: 3px;
+            position: relative;
+        }
+
+        .copy-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            display: none; /* 默认隐藏 */
+        }
+
+        .copy-button:hover {
+            background-color: #45a049;
+        }
+
+        .data-item:hover .copy-button {
+            display: block; /* 鼠标悬停时显示 */
+        }
+
+        pre {
+            white-space: pre-wrap;       /* CSS3 */
+            white-space: -moz-pre-wrap;  /* Firefox */
+            white-space: -o-pre-wrap;    /* Opera 7 */
+            word-wrap: break-word;       /* Internet Explorer 5.5+ */
+        }
+
+        #conversationRecordSection {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DS API 请求展示</h1>
+
+        <div class="input-section">
+            <textarea id="requestInput" placeholder="请输入请求数据（JSON格式）">
+请输入请求数据（JSON格式）示例>>>「请编辑」:
+{
+    "model_name": "deepseek-r1:1.5b",
+    "uid": "456",
+    "conv_id": "123",
+    "input_text": "什么是数字生命"
+}
+            </textarea>
+            <button id="requestButton" onclick="handleRequest()">发送请求</button>
+            <button class="copy-button" onclick="copyToClipboard(document.getElementById('requestInput'))">复制</button>
+            <button id="getRecordButton" onclick="getConversationRecord()">获取会话记录</button>
+        </div>
+
+        <div class="response-section" id="requestSection">
+            <h2>请求数据:</h2>
+            <!-- 请求数据将被显示在这里 -->
+        </div>
+
+        <div class="response-section" id="responseSection">
+            <h2>响应数据:</h2>
+            <!-- 响应数据将被显示在这里 -->
+        </div>
+
+        <div class="response-section" id="conversationRecordSection">
+            <h2>会话记录:</h2>
+            <!-- 会话记录将被显示在这里 -->
+        </div>
+    </div>
+
+    <script>
+        const requestInput = document.getElementById('requestInput');
+
+        // 初始化文本颜色
+        if (requestInput.value.trim() === '') {
+            requestInput.style.color = '#aaa'; // 占位符颜色
+        } else {
+            requestInput.style.color = '#333'; // 正常文本颜色
+        }
+
+        requestInput.addEventListener('input', function() {
+            if (this.value.trim() === '') {
+                this.style.color = '#aaa'; // 占位符颜色
+            } else {
+                this.style.color = '#333'; // 正常文本颜色
+            }
+        });
+
+        async function handleRequest() {
+            const requestButton = document.getElementById('requestButton');
+            const input = document.getElementById('requestInput').value;
+            if (!input) return;
+
+            requestButton.textContent = '请求中...';
+            requestButton.disabled = true;
+
+            try {
+                const response = await fetch('http://0.0.0.0:8088/api/ds/continue_conversation/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'accept': 'application/json'
+                    },
+                    body: input
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const responseData = await response.json();
+                displayResponse(responseData);
+            } catch (error) {
+                console.error('Error:', error);
+                displayResponse({ message: { role: 'assistant', content: `请求失败: ${error.message}` } });
+            } finally {
+                requestButton.textContent = '发送请求';
+                requestButton.disabled = false;
+            }
+        }
+
+        function displayResponse(response) {
+            // 清除现有内容
+            document.querySelectorAll('.data-item').forEach(item => item.remove());
+
+            const requestSection = document.getElementById('requestSection');
+            const responseSection = document.getElementById('responseSection');
+
+            // 显示请求数据
+            const requestDiv = document.createElement('div');
+            requestDiv.className = 'data-item';
+            requestDiv.innerHTML = `
+                <strong>请求内容</strong><br>
+                <pre>${JSON.stringify(JSON.parse(document.getElementById('requestInput').value), null, 2)}</pre>
+                <button class="copy-button" onclick="copyToClipboard(this)">复制</button>
+            `;
+            requestSection.appendChild(requestDiv);
+
+            // 显示响应数据
+            const responseDiv = document.createElement('div');
+            responseDiv.className = 'data-item';
+
+            // 提取 message.content 并单独渲染
+            const messageContent = response.message && response.message.content ? response.message.content : '响应内容为空';
+            responseDiv.innerHTML = `
+                <strong>响应内容</strong><br>
+                <pre>${messageContent}</pre>
+                <button class="copy-button" onclick="copyToClipboard(this)">复制</button>
+            `;
+            responseSection.appendChild(responseDiv);
+
+            // 显示其他响应数据
+            const otherResponseData = { ...response };
+            delete otherResponseData.message;
+
+            if (Object.keys(otherResponseData).length > 0) {
+                const otherResponseDiv = document.createElement('div');
+                otherResponseDiv.className = 'data-item';
+                otherResponseDiv.innerHTML = `
+                    <strong>其他响应数据</strong><br>
+                    <pre>${JSON.stringify(otherResponseData, null, 2)}</pre>
+                    <button class="copy-button" onclick="copyToClipboard(this)">复制</button>
+                `;
+                responseSection.appendChild(otherResponseDiv);
+            }
+        }
+
+        function copyToClipboard(element) {
+            const text = element.previousElementSibling.textContent;
+
+            const tempInput = document.createElement('textarea');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            element.textContent = '已复制';
+            setTimeout(() => {
+                element.textContent = '复制';
+            }, 2000);
+        }
+
+        async function getConversationRecord() {
+            const requestButton = document.getElementById('getRecordButton');
+            const convId = JSON.parse(document.getElementById('requestInput').value).conv_id;
+            if (!convId) return;
+
+            requestButton.textContent = '获取中...';
+            requestButton.disabled = true;
+
+            try {
+                const response = await fetch(`http://0.0.0.0:8088/api/ds/get_record/${convId}`, {
+                    method: 'GET',
+                    headers: {
+                        'accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const responseData = await response.json();
+                displayConversationRecord(responseData);
+            } catch (error) {
+                console.error('Error:', error);
+                displayConversationRecord({ message: `获取失败: ${error.message}` });
+            } finally {
+                requestButton.textContent = '获取会话记录';
+                requestButton.disabled = false;
+            }
+        }
+
+        function displayConversationRecord(record) {
+            // 清除现有内容
+            document.querySelectorAll('#conversationRecordSection .data-item').forEach(item => item.remove());
+
+            const recordSection = document.getElementById('conversationRecordSection');
+
+            // 显示会话记录
+            const recordDiv = document.createElement('div');
+            recordDiv.className = 'data-item';
+            recordDiv.innerHTML = `
+                <strong>会话记录内容</strong><br>
+                <pre>${JSON.stringify(record, null, 2)}</pre>
+                <button class="copy-button" onclick="copyToClipboard(this)">复制</button>
+            `;
+            recordSection.appendChild(recordDiv);
+
+            // 如果 record 是一个对象，遍历其属性并为每个属性添加单独的复制按钮
+            if (typeof record === 'object' && record !== null) {
+                for (const key in record) {
+                    if (record.hasOwnProperty(key)) {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'data-item';
+                        itemDiv.innerHTML = `
+                            <strong>${key}</strong><br>
+                            <pre>${JSON.stringify(record[key], null, 2)}</pre>
+                            <button class="copy-button" onclick="copyToClipboard(this)">复制</button>
+                        `;
+                        recordSection.appendChild(itemDiv);
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>

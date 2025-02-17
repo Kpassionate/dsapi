@@ -1,0 +1,11 @@
+/.idea
+/.model
+/venv
+__pycache__
+.DS_Store
+./runtime
+./.gitignore
+/logs/
+/test_2025
+/mainsys/cache
+*__bak.py
