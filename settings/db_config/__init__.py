@@ -17,7 +17,7 @@ engines = {}
 db_session = {}
 for db_connect in db_connect_dict:
     # echo=True表示引擎将用repr()函数记录所有语句及其参数列表到日志
-    engine = create_engine(db_connect_dict[db_connect], echo=True, pool_size=3)
+    engine = create_engine(db_connect_dict[db_connect], echo=False, pool_size=3)
     engines[db_connect] = engine
     Session = sessionmaker(bind=engine)
     db_session[db_connect] = Session()

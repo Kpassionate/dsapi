@@ -78,7 +78,6 @@ async def continue_conversation(payload: ConversationPayload):
         messages.append({'role': 'user', 'content': record.input_text})
         messages.append({'role': 'assistant', 'content': record.assistant_content})
     messages.append({'role': 'user', 'content': input_text})
-    print(messages)
     # 构造请求参数
     data = {
         "model": model_name,
